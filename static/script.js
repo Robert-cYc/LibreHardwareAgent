@@ -45,6 +45,21 @@ function connectWebSocket() {
         } else if (msg.type === 'update') {
             const dataMap = msg.data;
             const now = Date.now();
+            
+            // Update Mini Widgets
+            for (const [id, data] of Object.entries(dataMap)) {
+                if (id.includes('cpu') && id.includes('load')) {
+                    const el = document.querySelector('#widget-cpuLoad .widget-val');
+                    if (el) el.textContent = `${Math.round(data.value)}%`;
+                } else if (id.includes('gpu') && id.includes('load')) {
+                    const el = document.querySelector('#widget-gpuLoad .widget-val');
+                    if (el) el.textContent = `${Math.round(data.value)}%`;
+                } else if (id.includes('ram') && id.includes('load')) {
+                    const el = document.querySelector('#widget-ramLoad .widget-val');
+                    if (el) el.textContent = `${Math.round(data.value)}%`;
+                }
+            }
+            
             // Update all active charts
             for (const [identifier, chart] of Object.entries(activeCharts)) {
                 const timeframeMs = (chart.config.options.plugins.timeframe || 15) * 60 * 1000;
@@ -206,7 +221,10 @@ async function createChart(identifier, title, timeframe, pos = { w: 4, h: 2, x: 
             <div class="grid-stack-item-content chart-container" style="display: flex; flex-direction: column;">
                 <div class="chart-header">
                     <span class="chart-title">${title.toUpperCase().replace('_', ' ')}</span>
-                    <button class="chart-remove" onclick="removeChart('${identifier}')" title="移除圖表">×</button>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button class="chart-action-btn" onclick="downloadChart('${safeId}', '${title}')" title="下載圖表">⬇️</button>
+                        <button class="chart-remove" onclick="removeChart('${identifier}')" title="移除圖表">×</button>
+                    </div>
                 </div>
                 <div style="flex: 1; position: relative;">
                     <canvas id="canvas-${safeId}"></canvas>
@@ -314,6 +332,25 @@ function removeChart(identifier) {
         saveLayout();
         updateEmptyState();
     }
+}
+
+function downloadChart(safeId, title) {
+    const canvas = document.getElementById(`canvas-${safeId}`);
+    if (!canvas) return;
+    
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const ctx = tempCanvas.getContext('2d');
+    
+    ctx.fillStyle = '#10101a'; 
+    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    ctx.drawImage(canvas, 0, 0);
+    
+    const link = document.createElement('a');
+    link.download = `${title.replace(/\\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.png`;
+    link.href = tempCanvas.toDataURL('image/png');
+    link.click();
 }
 
 function saveLayout() {

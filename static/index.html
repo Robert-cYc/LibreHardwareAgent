@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Hardware Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css?v=6">
+    <link rel="stylesheet" href="/static/style.css?v=9">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     
@@ -15,6 +15,11 @@
 <body>
     <div class="header">
         <h1>NEON<span>AGENT</span> // HARDWARE MONITOR</h1>
+        <div class="header-widgets" id="headerWidgets">
+            <div class="mini-widget" id="widget-cpuLoad" title="CPU 整體負載"><span class="widget-label">CPU</span><span class="widget-val">--%</span></div>
+            <div class="mini-widget" id="widget-gpuLoad" title="GPU 整體負載"><span class="widget-label">GPU</span><span class="widget-val">--%</span></div>
+            <div class="mini-widget" id="widget-ramLoad" title="記憶體使用率"><span class="widget-label">RAM</span><span class="widget-val">--%</span></div>
+        </div>
         <div class="header-right" style="display: flex; align-items: center; gap: 1.5rem;">
             <div id="connectionStatus" style="color: #45a29e;">連線中...</div>
             <div class="alert-icon-wrapper" id="alertBtn" title="警報紀錄">
@@ -83,6 +88,6 @@
         </div>
     </div>
 
-    <script src="/static/script.js?v=8"></script>
+    <script src="/static/script.js?v=9"></script>
 </body>
 </html>

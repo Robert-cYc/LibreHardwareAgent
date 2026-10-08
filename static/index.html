@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Hardware Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css?v=10">
+    <link rel="stylesheet" href="/static/style.css?v=11">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     
@@ -27,6 +27,11 @@
         </div>
         <div class="header-right" style="display: flex; align-items: center; gap: 1.5rem;">
             <div id="connectionStatus" style="color: #45a29e;">連線中...</div>
+            
+            <button id="clearBtn" class="icon-btn" title="重置與清除所有圖表" style="padding: 0; background: transparent; border: none; width: 22px; height: 22px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+            </button>
+            
             <div class="alert-icon-wrapper" id="alertBtn" title="警報紀錄">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -63,9 +68,6 @@
                 <div class="chat-input-area">
                     <input type="text" id="chatInput" placeholder="例如：幫我加上 CPU 和 GPU 溫度的圖表">
                     <button id="sendBtn">執行</button>
-                    <button id="clearBtn" class="icon-btn" title="重置與清除所有圖表">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                    </button>
                 </div>
                 <div class="manual-add-section" style="display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem;">
                     <select id="sensorSelect" style="width: 100%; padding: 0.8rem; border-radius: 4px; background: rgba(0,0,0,0.5); border: 1px solid var(--panel-border); color: var(--accent); font-family: var(--font-main); outline: none;">
@@ -97,6 +99,6 @@
         </div>
     </div>
 
-    <script src="/static/script.js?v=10"></script>
+    <script src="/static/script.js?v=11"></script>
 </body>
 </html>

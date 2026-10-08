@@ -230,6 +230,18 @@ async function handleCommand() {
     }
 }
 
+function getUnit(identifier) {
+    const id = identifier.toLowerCase();
+    if (id.includes('/load/') || id.includes('/control/')) return '%';
+    if (id.includes('/temperature/')) return '°C';
+    if (id.includes('/power/')) return 'W';
+    if (id.includes('/clock/')) return 'MHz';
+    if (id.includes('/fan/')) return 'RPM';
+    if (id.includes('/voltage/')) return 'V';
+    if (id.includes('/data/') || id.includes('/smalldata/')) return 'GB';
+    return '';
+}
+
 async function createChart(identifier, title, timeframe, pos = { w: 4, h: 2, x: undefined, y: undefined }) {
     // Fetch historical data to prepopulate chart
     const res = await fetch(`/api/history?identifier=${encodeURIComponent(identifier)}&minutes=${timeframe}`);
@@ -270,6 +282,9 @@ async function createChart(identifier, title, timeframe, pos = { w: 4, h: 2, x: 
     // Set initial colors based on latest data
     const lastValue = formattedData.length > 0 ? formattedData[formattedData.length - 1].y : 0;
     const initColors = getChartColors(ctx, lastValue, identifier);
+    
+    const unit = getUnit(identifier);
+    const unitSuffix = unit ? ` ${unit}` : '';
 
     const chart = new Chart(ctx, {
         type: 'line',
@@ -303,7 +318,12 @@ async function createChart(identifier, title, timeframe, pos = { w: 4, h: 2, x: 
                     borderColor: 'rgba(102, 252, 241, 0.3)',
                     borderWidth: 1,
                     padding: 10,
-                    displayColors: false
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}${unitSuffix}`;
+                        }
+                    }
                 },
                 timeframe: timeframe // Custom property for sliding window logic
             },
@@ -332,7 +352,10 @@ async function createChart(identifier, title, timeframe, pos = { w: 4, h: 2, x: 
                     },
                     ticks: {
                         color: '#8b8c8d',
-                        padding: 10
+                        padding: 10,
+                        callback: function(value) {
+                            return value + unitSuffix;
+                        }
                     },
                     beginAtZero: true
                 }

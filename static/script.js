@@ -534,3 +534,34 @@ document.getElementById('closeAlertBtn')?.addEventListener('click', () => {
     document.getElementById('alertModal').classList.remove('active');
 });
 
+// Clear Dashboard Logic
+document.getElementById('clearBtn')?.addEventListener('click', () => {
+    // Keep only the welcome message
+    const welcomeMsg = chatHistory.firstElementChild;
+    chatHistory.innerHTML = '';
+    if (welcomeMsg) chatHistory.appendChild(welcomeMsg);
+    
+    // Remove all charts
+    Object.values(activeCharts).forEach(c => c.destroy());
+    for (const key in activeCharts) delete activeCharts[key];
+    grid.removeAll();
+    
+    saveLayout();
+    updateEmptyState();
+    addMessage('已為您重置儀表板與歷史對話。', 'system');
+});
+
+// Mobile Menu Logic
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const sidebarEl = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+mobileMenuBtn?.addEventListener('click', () => {
+    sidebarEl.classList.add('open');
+    sidebarOverlay.classList.add('open');
+});
+sidebarOverlay?.addEventListener('click', () => {
+    sidebarEl.classList.remove('open');
+    sidebarOverlay.classList.remove('open');
+});
+

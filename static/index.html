@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Hardware Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css?v=9">
+    <link rel="stylesheet" href="/static/style.css?v=10">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     
@@ -14,7 +14,12 @@
 </head>
 <body>
     <div class="header">
-        <h1>NEON<span>AGENT</span> // HARDWARE MONITOR</h1>
+        <div class="header-left" style="display: flex; align-items: center; gap: 1rem;">
+            <button id="mobileMenuBtn" class="icon-btn mobile-only">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <h1>NEON<span>AGENT</span> // HARDWARE MONITOR</h1>
+        </div>
         <div class="header-widgets" id="headerWidgets">
             <div class="mini-widget" id="widget-cpuLoad" title="CPU 整體負載"><span class="widget-label">CPU</span><span class="widget-val">--%</span></div>
             <div class="mini-widget" id="widget-gpuLoad" title="GPU 整體負載"><span class="widget-label">GPU</span><span class="widget-val">--%</span></div>
@@ -46,7 +51,8 @@
     </div>
     
     <div class="main-container">
-        <div class="sidebar">
+        <div id="sidebarOverlay" class="sidebar-overlay"></div>
+        <div class="sidebar" id="sidebar">
             <div class="chat-history" id="chatHistory">
                 <div class="message system">
                     <div>Agent 準備就緒。我可以為您建立圖表、設定警報或查詢歷史數據。</div>
@@ -57,6 +63,9 @@
                 <div class="chat-input-area">
                     <input type="text" id="chatInput" placeholder="例如：幫我加上 CPU 和 GPU 溫度的圖表">
                     <button id="sendBtn">執行</button>
+                    <button id="clearBtn" class="icon-btn" title="重置與清除所有圖表">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                    </button>
                 </div>
                 <div class="manual-add-section" style="display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem;">
                     <select id="sensorSelect" style="width: 100%; padding: 0.8rem; border-radius: 4px; background: rgba(0,0,0,0.5); border: 1px solid var(--panel-border); color: var(--accent); font-family: var(--font-main); outline: none;">
@@ -88,6 +97,6 @@
         </div>
     </div>
 
-    <script src="/static/script.js?v=9"></script>
+    <script src="/static/script.js?v=10"></script>
 </body>
 </html>

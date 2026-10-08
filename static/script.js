@@ -59,14 +59,14 @@ function connectWebSocket() {
                     const el = document.querySelector('#widget-cpuLoad .widget-val');
                     const widget = document.getElementById('widget-cpuLoad');
                     if (el) el.textContent = `${Math.round(data.value)}%`;
-                    if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name; }
+                    if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name || 'CPU Load'; }
                 } 
                 // RAM Memory
                 else if (id.includes('ram') && id.includes('load') && (nameLower === 'memory' || (id.endsWith('/load/0') && !document.getElementById('widget-ramLoad').dataset.targetId))) {
                     const el = document.querySelector('#widget-ramLoad .widget-val');
                     const widget = document.getElementById('widget-ramLoad');
                     if (el) el.textContent = `${Math.round(data.value)}%`;
-                    if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name; }
+                    if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name || 'Memory'; }
                 }
                 // GPU (Find the most active one between dGPU and iGPU)
                 else if (id.includes('gpu') && id.includes('load')) {
@@ -74,7 +74,7 @@ function connectWebSocket() {
                         if (data.value > bestGpuLoad) {
                             bestGpuLoad = data.value;
                             bestGpuId = id;
-                            bestGpuName = data.name;
+                            bestGpuName = data.name || 'GPU Load';
                         }
                     }
                 }

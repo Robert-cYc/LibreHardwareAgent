@@ -275,7 +275,7 @@ async def ws_broadcaster():
             latest_data = {}
             for r in cursor.fetchall():
                 ident, name, val = r[0], r[1], r[2]
-                latest_data[ident] = {"timestamp": latest_ts*1000, "value": val}
+                latest_data[ident] = {"timestamp": latest_ts*1000, "value": val, "name": name}
                 
                 # Smart Alerts Logic
                 current_time = time.time()

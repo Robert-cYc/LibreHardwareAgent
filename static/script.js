@@ -110,7 +110,19 @@ connectWebSocket();
 function addMessage(text, sender) {
     const div = document.createElement('div');
     div.className = `message ${sender}`;
-    div.textContent = text;
+    
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.innerHTML = text; // allow basic html
+    
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'message-time';
+    timeDiv.textContent = timeStr;
+    
+    div.appendChild(contentDiv);
+    div.appendChild(timeDiv);
+    
     chatHistory.appendChild(div);
     chatHistory.scrollTop = chatHistory.scrollHeight;
 }

@@ -173,6 +173,14 @@ body::before {
     color: #e2e8f0;
 }
 
+.message-time {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.3);
+    margin-top: 6px;
+    text-align: right;
+    font-family: var(--font-cyber);
+}
+
 .chat-input-area {
     display: flex;
     gap: 0.8rem;

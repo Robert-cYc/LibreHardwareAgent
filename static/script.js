@@ -48,17 +48,19 @@ function connectWebSocket() {
             
             // Update Mini Widgets
             for (const [id, data] of Object.entries(dataMap)) {
-                if (id.includes('cpu') && id.includes('load')) {
+                const nameLower = (data.name || '').toLowerCase();
+                
+                if (id.includes('cpu') && id.includes('load') && (nameLower.includes('total') || id.endsWith('/load/0'))) {
                     const el = document.querySelector('#widget-cpuLoad .widget-val');
                     const widget = document.getElementById('widget-cpuLoad');
                     if (el) el.textContent = `${Math.round(data.value)}%`;
                     if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name || 'CPU Load'; }
-                } else if (id.includes('gpu') && id.includes('load')) {
+                } else if (id.includes('gpu') && id.includes('load') && (nameLower.includes('core') || id.endsWith('/load/0'))) {
                     const el = document.querySelector('#widget-gpuLoad .widget-val');
                     const widget = document.getElementById('widget-gpuLoad');
                     if (el) el.textContent = `${Math.round(data.value)}%`;
                     if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name || 'GPU Load'; }
-                } else if (id.includes('ram') && id.includes('load')) {
+                } else if (id.includes('ram') && id.includes('load') && (nameLower.includes('memory') || id.endsWith('/load/0'))) {
                     const el = document.querySelector('#widget-ramLoad .widget-val');
                     const widget = document.getElementById('widget-ramLoad');
                     if (el) el.textContent = `${Math.round(data.value)}%`;

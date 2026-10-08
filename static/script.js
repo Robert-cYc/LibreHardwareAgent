@@ -84,7 +84,9 @@ function connectWebSocket() {
             setTimeout(() => dashboard.style.boxShadow = 'none', 1500);
             
             // Add to alert history modal
-            alertsHistory.unshift({ time: new Date().toLocaleTimeString(), msg: msg.message });
+            const now = new Date();
+            const timestamp = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+            alertsHistory.unshift({ time: timestamp, msg: msg.message });
             unreadAlerts++;
             updateAlertBadge();
             renderAlertHistory();

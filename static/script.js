@@ -74,10 +74,16 @@ function connectWebSocket() {
                 chart.update('none');
             }
         } else if (msg.type === 'alert') {
-            addMessage(msg.message, 'system');
             // Flash red border effect
             dashboard.style.boxShadow = 'inset 0 0 50px rgba(255, 76, 76, 0.5)';
             setTimeout(() => dashboard.style.boxShadow = 'none', 1500);
+            
+            // Add to alert history modal
+            alertsHistory.unshift({ time: new Date().toLocaleTimeString(), msg: msg.message });
+            unreadAlerts++;
+            updateAlertBadge();
+            renderAlertHistory();
+            addMessage(msg.message, 'system');
         }
     };
 
@@ -109,7 +115,7 @@ async function handleCommand() {
     addMessage(text, 'user');
     chatInput.value = '';
     
-    addMessage('AI Agent 正在分析指令...', 'system');
+    showThinking();
     
     try {
         const response = await fetch('/api/chat', {
@@ -120,8 +126,7 @@ async function handleCommand() {
         
         const result = await response.json();
         
-        // Remove the 'thinking' message
-        chatHistory.lastChild.remove();
+        removeThinking();
         
         if (result.status === 'error') {
             addMessage(`系統回報: ${result.message}`, 'system');
@@ -158,9 +163,7 @@ async function handleCommand() {
         }
 
     } catch (err) {
-        if(chatHistory.lastChild.textContent.includes('分析指令')) {
-            chatHistory.lastChild.remove();
-        }
+        removeThinking();
         addMessage(`連線發生錯誤: ${err.message}`, 'system');
     }
 }
@@ -278,6 +281,7 @@ async function createChart(identifier, title, timeframe, pos = { w: 4, h: 2, x: 
 
     activeCharts[identifier] = chart;
     saveLayout();
+    updateEmptyState();
 }
 
 function removeChart(identifier) {
@@ -290,6 +294,7 @@ function removeChart(identifier) {
             grid.removeWidget(widget);
         }
         saveLayout();
+        updateEmptyState();
     }
 }
 
@@ -325,6 +330,7 @@ async function loadLayout() {
             addMessage(`已自動為您還原上次的 ${layout.length} 個圖表。`, 'system');
         }
     }
+    updateEmptyState();
 }
 
 async function populateSensors() {
@@ -386,3 +392,64 @@ sendBtn.addEventListener('click', handleCommand);
 chatInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleCommand();
 });
+
+// UX Functions
+let thinkingEl = null;
+function showThinking() {
+    thinkingEl = document.createElement('div');
+    thinkingEl.className = 'typing-indicator';
+    thinkingEl.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+    chatHistory.appendChild(thinkingEl);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+}
+function removeThinking() {
+    if (thinkingEl && thinkingEl.parentNode) {
+        thinkingEl.parentNode.removeChild(thinkingEl);
+        thinkingEl = null;
+    }
+}
+
+function updateEmptyState() {
+    const emptyState = document.getElementById('emptyState');
+    if (emptyState) {
+        emptyState.style.opacity = Object.keys(activeCharts).length === 0 ? '1' : '0';
+    }
+}
+
+// Alert Modal Logic
+const alertsHistory = [];
+let unreadAlerts = 0;
+
+function updateAlertBadge() {
+    const badge = document.getElementById('alertBadge');
+    if (unreadAlerts > 0) {
+        badge.textContent = unreadAlerts > 99 ? '99+' : unreadAlerts;
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function renderAlertHistory() {
+    const list = document.getElementById('alertHistoryList');
+    if (alertsHistory.length === 0) {
+        list.innerHTML = '<div class="no-alerts">目前沒有任何警報紀錄</div>';
+        return;
+    }
+    list.innerHTML = alertsHistory.map(alert => `
+        <div class="alert-item">
+            <div class="alert-time">${alert.time}</div>
+            <div class="alert-msg">${alert.msg}</div>
+        </div>
+    `).join('');
+}
+
+document.getElementById('alertBtn')?.addEventListener('click', () => {
+    document.getElementById('alertModal').classList.add('active');
+    unreadAlerts = 0;
+    updateAlertBadge();
+});
+document.getElementById('closeAlertBtn')?.addEventListener('click', () => {
+    document.getElementById('alertModal').classList.remove('active');
+});
+

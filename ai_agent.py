@@ -65,6 +65,15 @@ def parse_intent(user_input: str) -> dict:
         "threshold": 75
     }}
     
+    Scenario 4: User asks for historical analysis (e.g. "what was the max CPU temp in the last hour?").
+    Return a JSON with this exact structure:
+    {{
+        "action": "analyze",
+        "target": "target_identifier",
+        "metric": "max", // can be "max", "min", or "avg"
+        "timeframe": 60 // in minutes
+    }}
+    
     --- SYSTEMINFO DATA ---
     {SYSTEM_INFO_CACHE}
     -----------------------

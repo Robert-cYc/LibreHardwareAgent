@@ -113,6 +113,29 @@ async def chat_endpoint(request: ChatRequest):
             custom_alert_thresholds[identifier] = float(threshold)
             return {"status": "success", "message": f"好的，我已經幫您將該感測器的警報閾值設定為 {threshold}。"}
         return {"status": "error", "message": "找不到指定的硬體感測器，無法設定警報。"}
+        
+    if action == "analyze":
+        metric = intent.get("metric", "avg")
+        timeframe = int(intent.get("timeframe", 60))
+        identifier = find_identifier_for_target(target)
+        
+        if identifier:
+            cutoff = time.time() - (timeframe * 60)
+            with database.get_db_connection() as conn:
+                c = conn.cursor()
+                if metric == "max":
+                    c.execute("SELECT MAX(value) FROM sensor_data WHERE identifier=? AND timestamp>?", (identifier, cutoff))
+                elif metric == "min":
+                    c.execute("SELECT MIN(value) FROM sensor_data WHERE identifier=? AND timestamp>?", (identifier, cutoff))
+                else:
+                    c.execute("SELECT AVG(value) FROM sensor_data WHERE identifier=? AND timestamp>?", (identifier, cutoff))
+                
+                val = c.fetchone()[0]
+                if val is not None:
+                    metric_tw = {"max": "最高", "min": "最低", "avg": "平均"}.get(metric, metric)
+                    return {"status": "answer", "message": f"根據歷史資料庫紀錄，目標感測器在過去 {timeframe} 分鐘內的 **{metric_tw}值**為 **{val:.2f}**。"}
+                return {"status": "answer", "message": f"過去 {timeframe} 分鐘內沒有找到任何相關的數據。"}
+        return {"status": "error", "message": "找不到指定的硬體感測器，無法進行分析。"}
     
     identifier = None
     if action == "add":

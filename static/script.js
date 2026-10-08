@@ -5,6 +5,18 @@ const dashboard = document.getElementById('dashboard');
 
 const activeCharts = {}; // { identifier: chartInstance }
 
+// Initialize GridStack
+const grid = GridStack.init({
+    cellHeight: '150px',
+    margin: 15,
+    animate: true,
+    resizable: { handles: 'se, sw' } // allow resizing
+});
+
+grid.on('change', function(event, items) {
+    saveLayout();
+});
+
 // WebSocket connection
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
@@ -13,12 +25,23 @@ let ws;
 function connectWebSocket() {
     ws = new WebSocket(wsUrl);
     
+    ws.onopen = () => {
+        const statusEl = document.getElementById('connectionStatus');
+        if (statusEl) {
+            statusEl.textContent = '已連線';
+            statusEl.style.color = '#66fcf1';
+        }
+    };
+
     ws.onmessage = (event) => {
         const msg = JSON.parse(event.data);
         if (msg.type === 'update') {
             const dataMap = msg.data;
+            const now = Date.now();
             // Update all active charts
             for (const [identifier, chart] of Object.entries(activeCharts)) {
+                const timeframeMs = (chart.config.options.plugins.timeframe || 15) * 60 * 1000;
+                
                 if (dataMap[identifier]) {
                     const point = {
                         x: dataMap[identifier].timestamp,
@@ -26,18 +49,22 @@ function connectWebSocket() {
                     };
                     
                     const dataset = chart.data.datasets[0];
-                    dataset.data.push(point);
+                    const lastPoint = dataset.data[dataset.data.length - 1];
                     
-                    // Maintain a sliding window (e.g., last 15 minutes)
-                    const timeframeMs = (chart.config.options.plugins.timeframe || 15) * 60 * 1000;
-                    const cutoff = point.x - timeframeMs;
+                    if (!lastPoint || lastPoint.x !== point.x) {
+                        dataset.data.push(point);
+                    }
+                    
+                    const cutoff = now - timeframeMs;
                     
                     while (dataset.data.length > 0 && dataset.data[0].x < cutoff) {
                         dataset.data.shift();
                     }
-                    
-                    chart.update('none');
                 }
+                
+                chart.options.scales.x.min = now - timeframeMs;
+                chart.options.scales.x.max = now;
+                chart.update('none');
             }
         } else if (msg.type === 'alert') {
             addMessage(msg.message, 'system');
@@ -48,6 +75,11 @@ function connectWebSocket() {
     };
 
     ws.onclose = () => {
+        const statusEl = document.getElementById('connectionStatus');
+        if (statusEl) {
+            statusEl.textContent = '連線中...';
+            statusEl.style.color = '#ff4b4b';
+        }
         console.log("WebSocket disconnected, reconnecting in 5s...");
         setTimeout(connectWebSocket, 5000);
     };
@@ -126,39 +158,36 @@ async function handleCommand() {
     }
 }
 
-async function createChart(identifier, title, timeframe) {
+async function createChart(identifier, title, timeframe, pos = { w: 4, h: 2, x: undefined, y: undefined }) {
     // Fetch historical data to prepopulate chart
     const res = await fetch(`/api/history?identifier=${encodeURIComponent(identifier)}&minutes=${timeframe}`);
     const { data } = await res.json();
     
     const formattedData = data.map(d => ({ x: d.timestamp, y: d.value }));
 
-    // Create DOM structure
-    const container = document.createElement('div');
-    container.className = 'chart-container glass-panel';
-    container.id = `chart-container-${identifier}`;
-
-    const header = document.createElement('div');
-    header.className = 'chart-header';
+    // Create GridStack widget DOM structure
+    const xAttr = pos.x !== undefined ? `gs-x="${pos.x}"` : '';
+    const yAttr = pos.y !== undefined ? `gs-y="${pos.y}"` : '';
     
-    const titleEl = document.createElement('div');
-    titleEl.className = 'chart-title';
-    titleEl.textContent = title.toUpperCase().replace('_', ' ');
+    // Sanitize identifier for DOM IDs to prevent querySelector errors in GridStack
+    const safeId = identifier.replace(/[^a-zA-Z0-9]/g, '_');
     
-    const removeBtn = document.createElement('button');
-    removeBtn.className = 'remove-btn';
-    removeBtn.innerHTML = '×';
-    removeBtn.title = '移除圖表';
-    removeBtn.onclick = () => removeChart(identifier);
-
-    header.appendChild(titleEl);
-    header.appendChild(removeBtn);
-
-    const canvas = document.createElement('canvas');
-    container.appendChild(header);
-    container.appendChild(canvas);
+    const widgetHtml = `
+        <div class="grid-stack-item" ${xAttr} ${yAttr} gs-w="${pos.w}" gs-h="${pos.h}" id="widget-${safeId}" gs-id="${identifier}">
+            <div class="grid-stack-item-content chart-container" style="display: flex; flex-direction: column;">
+                <div class="chart-header">
+                    <span class="chart-title">${title.toUpperCase().replace('_', ' ')}</span>
+                    <button class="chart-remove" onclick="removeChart('${identifier}')" title="移除圖表">×</button>
+                </div>
+                <div style="flex: 1; position: relative;">
+                    <canvas id="canvas-${safeId}"></canvas>
+                </div>
+            </div>
+        </div>
+    `;
     
-    dashboard.appendChild(container);
+    grid.addWidget(widgetHtml);
+    const canvas = document.getElementById(`canvas-${safeId}`);
 
     // Initialize Chart.js
     const ctx = canvas.getContext('2d');
@@ -177,7 +206,7 @@ async function createChart(identifier, title, timeframe) {
                 borderColor: '#66fcf1',
                 backgroundColor: gradient,
                 borderWidth: 2,
-                pointRadius: 0,
+                pointRadius: 1,
                 pointHoverRadius: 6,
                 pointHoverBackgroundColor: '#fff',
                 fill: true,
@@ -207,6 +236,8 @@ async function createChart(identifier, title, timeframe) {
             scales: {
                 x: {
                     type: 'time',
+                    min: Date.now() - (timeframe * 60 * 1000),
+                    max: Date.now(),
                     time: {
                         tooltipFormat: 'HH:mm:ss'
                     },
@@ -246,30 +277,42 @@ function removeChart(identifier) {
     if (activeCharts[identifier]) {
         activeCharts[identifier].destroy();
         delete activeCharts[identifier];
-        const container = document.getElementById(`chart-container-${identifier}`);
-        if (container) {
-            container.style.animation = 'zoomOut 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
-            setTimeout(() => container.remove(), 300);
+        const safeId = identifier.replace(/[^a-zA-Z0-9]/g, '_');
+        const widget = document.getElementById(`widget-${safeId}`);
+        if (widget) {
+            grid.removeWidget(widget);
         }
         saveLayout();
     }
 }
 
 function saveLayout() {
-    const layout = Object.keys(activeCharts).map(id => ({
-        identifier: id,
-        title: activeCharts[id].data.datasets[0].label,
-        timeframe: activeCharts[id].config.options.plugins.timeframe || 15
-    }));
-    localStorage.setItem('dashboard_layout', JSON.stringify(layout));
+    if (!grid) return;
+    const savedData = [];
+    grid.getGridItems().forEach(item => {
+        const id = item.getAttribute('gs-id');
+        const node = item.gridstackNode;
+        if (activeCharts[id]) {
+            savedData.push({
+                identifier: id,
+                title: activeCharts[id].data.datasets[0].label,
+                timeframe: activeCharts[id].config.options.plugins.timeframe || 15,
+                x: node.x,
+                y: node.y,
+                w: node.w,
+                h: node.h
+            });
+        }
+    });
+    localStorage.setItem('dashboard_layout_v2', JSON.stringify(savedData));
 }
 
 async function loadLayout() {
-    const saved = localStorage.getItem('dashboard_layout');
+    const saved = localStorage.getItem('dashboard_layout_v2') || localStorage.getItem('dashboard_layout');
     if (saved) {
         const layout = JSON.parse(saved);
         for (const item of layout) {
-            await createChart(item.identifier, item.title, item.timeframe);
+            await createChart(item.identifier, item.title, item.timeframe, { x: item.x, y: item.y, w: item.w || 4, h: item.h || 2 });
         }
         if (layout.length > 0) {
             addMessage(`已自動為您還原上次的 ${layout.length} 個圖表。`, 'system');

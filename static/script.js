@@ -50,21 +50,33 @@ function connectWebSocket() {
             for (const [id, data] of Object.entries(dataMap)) {
                 const nameLower = (data.name || '').toLowerCase();
                 
-                if (id.includes('cpu') && id.includes('load') && (nameLower.includes('total') || id.endsWith('/load/0'))) {
-                    const el = document.querySelector('#widget-cpuLoad .widget-val');
+                if (id.includes('cpu') && id.includes('load')) {
                     const widget = document.getElementById('widget-cpuLoad');
-                    if (el) el.textContent = `${Math.round(data.value)}%`;
-                    if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name || 'CPU Load'; }
-                } else if (id.includes('gpu') && id.includes('load') && (nameLower.includes('core') || id.endsWith('/load/0'))) {
-                    const el = document.querySelector('#widget-gpuLoad .widget-val');
+                    const currentTarget = (widget.dataset.targetName || '').toLowerCase();
+                    const isBetter = nameLower === 'cpu total' || (id.endsWith('/load/0') && currentTarget !== 'cpu total');
+                    if (isBetter || widget.dataset.targetId === id) {
+                        const el = document.querySelector('#widget-cpuLoad .widget-val');
+                        if (el) el.textContent = `${Math.round(data.value)}%`;
+                        if (widget && isBetter) { widget.dataset.targetId = id; widget.dataset.targetName = data.name; }
+                    }
+                } else if (id.includes('gpu') && id.includes('load')) {
                     const widget = document.getElementById('widget-gpuLoad');
-                    if (el) el.textContent = `${Math.round(data.value)}%`;
-                    if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name || 'GPU Load'; }
-                } else if (id.includes('ram') && id.includes('load') && (nameLower.includes('memory') || id.endsWith('/load/0'))) {
-                    const el = document.querySelector('#widget-ramLoad .widget-val');
+                    const currentTarget = (widget.dataset.targetName || '').toLowerCase();
+                    const isBetter = nameLower === 'gpu core' || (nameLower === 'd3d 3d' && currentTarget !== 'gpu core') || (id.endsWith('/load/0') && currentTarget !== 'gpu core' && currentTarget !== 'd3d 3d');
+                    if (isBetter || widget.dataset.targetId === id) {
+                        const el = document.querySelector('#widget-gpuLoad .widget-val');
+                        if (el) el.textContent = `${Math.round(data.value)}%`;
+                        if (widget && isBetter) { widget.dataset.targetId = id; widget.dataset.targetName = data.name; }
+                    }
+                } else if (id.includes('ram') && id.includes('load')) {
                     const widget = document.getElementById('widget-ramLoad');
-                    if (el) el.textContent = `${Math.round(data.value)}%`;
-                    if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name || 'RAM Usage'; }
+                    const currentTarget = (widget.dataset.targetName || '').toLowerCase();
+                    const isBetter = nameLower === 'memory' || (id.endsWith('/load/0') && currentTarget !== 'memory');
+                    if (isBetter || widget.dataset.targetId === id) {
+                        const el = document.querySelector('#widget-ramLoad .widget-val');
+                        if (el) el.textContent = `${Math.round(data.value)}%`;
+                        if (widget && isBetter) { widget.dataset.targetId = id; widget.dataset.targetName = data.name; }
+                    }
                 }
             }
             

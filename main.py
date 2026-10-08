@@ -11,9 +11,18 @@ from pydantic import BaseModel
 import database
 import ai_agent
 
-app = FastAPI(title="Hardware Monitor API")
+import os
+import sys
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# PyInstaller path resolution
+if getattr(sys, 'frozen', False):
+    base_dir = sys._MEIPASS
+else:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+static_dir = os.path.join(base_dir, "static")
+app = FastAPI(title="Hardware Monitor API")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 active_connections = []
 
@@ -84,7 +93,7 @@ def parse_lhm_data(node, records, current_timestamp, path=""):
 
 @app.get("/")
 async def get_index():
-    return FileResponse("static/index.html")
+    return FileResponse(os.path.join(static_dir, "index.html"))
 
 class ChatRequest(BaseModel):
     message: str
@@ -305,3 +314,15 @@ async def ws_broadcaster():
                     await conn_ws.send_text(message)
                 except Exception:
                     active_connections.remove(conn_ws)
+
+if __name__ == "__main__":
+    import uvicorn
+    import threading
+    import webbrowser
+
+    def open_browser():
+        time.sleep(1.5)
+        webbrowser.open("http://127.0.0.1:8000")
+
+    threading.Thread(target=open_browser, daemon=True).start()
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")

@@ -60,6 +60,11 @@ function connectWebSocket() {
                     
                     if (!lastPoint || lastPoint.x !== point.x) {
                         dataset.data.push(point);
+                        
+                        // Dynamic Color Update
+                        const newColors = getChartColors(chart.ctx, point.y, identifier);
+                        dataset.backgroundColor = newColors.gradient;
+                        dataset.borderColor = newColors.borderColor;
                     }
                     
                     const cutoff = now - timeframeMs;
@@ -202,10 +207,9 @@ async function createChart(identifier, title, timeframe, pos = { w: 4, h: 2, x: 
     // Initialize Chart.js
     const ctx = canvas.getContext('2d');
     
-    // Create subtle gradient fill
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, 'rgba(102, 252, 241, 0.4)');
-    gradient.addColorStop(1, 'rgba(102, 252, 241, 0.0)');
+    // Set initial colors based on latest data
+    const lastValue = formattedData.length > 0 ? formattedData[formattedData.length - 1].y : 0;
+    const initColors = getChartColors(ctx, lastValue, identifier);
 
     const chart = new Chart(ctx, {
         type: 'line',
@@ -213,8 +217,8 @@ async function createChart(identifier, title, timeframe, pos = { w: 4, h: 2, x: 
             datasets: [{
                 label: title,
                 data: formattedData,
-                borderColor: '#66fcf1',
-                backgroundColor: gradient,
+                borderColor: initColors.borderColor,
+                backgroundColor: initColors.gradient,
                 borderWidth: 2,
                 pointRadius: 1,
                 pointHoverRadius: 6,
@@ -392,6 +396,32 @@ sendBtn.addEventListener('click', handleCommand);
 chatInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleCommand();
 });
+
+// --- Chart Color Engine ---
+function getChartColors(ctx, value, identifier) {
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    let color = { r: 102, g: 252, b: 241, hex: '#66fcf1' }; // Cyan (Safe)
+    
+    // Dynamic thresholds based on sensor type
+    let warningThreshold = 75;
+    let dangerThreshold = 85;
+    
+    if (identifier.includes('load')) {
+        warningThreshold = 80;
+        dangerThreshold = 95;
+    }
+    
+    if (value >= dangerThreshold) {
+        color = { r: 255, g: 75, b: 75, hex: '#ff4b4b' }; // Red (Danger)
+    } else if (value >= warningThreshold) {
+        color = { r: 255, g: 180, b: 50, hex: '#ffb432' }; // Orange (Warning)
+    }
+    
+    gradient.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, 0.6)`);
+    gradient.addColorStop(1, `rgba(${color.r}, ${color.g}, ${color.b}, 0.0)`);
+    
+    return { gradient, borderColor: color.hex };
+}
 
 // UX Functions
 let thinkingEl = null;

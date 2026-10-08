@@ -232,6 +232,10 @@ async def get_history(identifier: str, minutes: int = 15):
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     active_connections.append(websocket)
+    
+    model_name = ai_agent.os.environ.get("ANTHROPIC_MODEL", "poolside/laguna-s-2.1:free")
+    await websocket.send_text(json.dumps({"type": "welcome", "model": model_name}))
+    
     try:
         while True:
             await websocket.receive_text()

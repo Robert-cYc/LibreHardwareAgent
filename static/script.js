@@ -47,37 +47,45 @@ function connectWebSocket() {
             const now = Date.now();
             
             // Update Mini Widgets
+            let bestGpuLoad = -1;
+            let bestGpuId = '';
+            let bestGpuName = 'GPU Load';
+
             for (const [id, data] of Object.entries(dataMap)) {
                 const nameLower = (data.name || '').toLowerCase();
                 
-                if (id.includes('cpu') && id.includes('load')) {
+                // CPU Total
+                if (id.includes('cpu') && id.includes('load') && (nameLower === 'cpu total' || (id.endsWith('/load/0') && !document.getElementById('widget-cpuLoad').dataset.targetId))) {
+                    const el = document.querySelector('#widget-cpuLoad .widget-val');
                     const widget = document.getElementById('widget-cpuLoad');
-                    const currentTarget = (widget.dataset.targetName || '').toLowerCase();
-                    const isBetter = nameLower === 'cpu total' || (id.endsWith('/load/0') && currentTarget !== 'cpu total');
-                    if (isBetter || widget.dataset.targetId === id) {
-                        const el = document.querySelector('#widget-cpuLoad .widget-val');
-                        if (el) el.textContent = `${Math.round(data.value)}%`;
-                        if (widget && isBetter) { widget.dataset.targetId = id; widget.dataset.targetName = data.name; }
-                    }
-                } else if (id.includes('gpu') && id.includes('load')) {
-                    const widget = document.getElementById('widget-gpuLoad');
-                    const currentTarget = (widget.dataset.targetName || '').toLowerCase();
-                    const isBetter = nameLower === 'gpu core' || (nameLower === 'd3d 3d' && currentTarget !== 'gpu core') || (id.endsWith('/load/0') && currentTarget !== 'gpu core' && currentTarget !== 'd3d 3d');
-                    if (isBetter || widget.dataset.targetId === id) {
-                        const el = document.querySelector('#widget-gpuLoad .widget-val');
-                        if (el) el.textContent = `${Math.round(data.value)}%`;
-                        if (widget && isBetter) { widget.dataset.targetId = id; widget.dataset.targetName = data.name; }
-                    }
-                } else if (id.includes('ram') && id.includes('load')) {
+                    if (el) el.textContent = `${Math.round(data.value)}%`;
+                    if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name; }
+                } 
+                // RAM Memory
+                else if (id.includes('ram') && id.includes('load') && (nameLower === 'memory' || (id.endsWith('/load/0') && !document.getElementById('widget-ramLoad').dataset.targetId))) {
+                    const el = document.querySelector('#widget-ramLoad .widget-val');
                     const widget = document.getElementById('widget-ramLoad');
-                    const currentTarget = (widget.dataset.targetName || '').toLowerCase();
-                    const isBetter = nameLower === 'memory' || (id.endsWith('/load/0') && currentTarget !== 'memory');
-                    if (isBetter || widget.dataset.targetId === id) {
-                        const el = document.querySelector('#widget-ramLoad .widget-val');
-                        if (el) el.textContent = `${Math.round(data.value)}%`;
-                        if (widget && isBetter) { widget.dataset.targetId = id; widget.dataset.targetName = data.name; }
+                    if (el) el.textContent = `${Math.round(data.value)}%`;
+                    if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name; }
+                }
+                // GPU (Find the most active one between dGPU and iGPU)
+                else if (id.includes('gpu') && id.includes('load')) {
+                    if (nameLower === 'gpu core' || nameLower === 'd3d 3d' || id.endsWith('/load/0')) {
+                        if (data.value > bestGpuLoad) {
+                            bestGpuLoad = data.value;
+                            bestGpuId = id;
+                            bestGpuName = data.name;
+                        }
                     }
                 }
+            }
+
+            // Update GPU widget with the most active GPU
+            if (bestGpuId) {
+                const el = document.querySelector('#widget-gpuLoad .widget-val');
+                const widget = document.getElementById('widget-gpuLoad');
+                if (el) el.textContent = `${Math.round(bestGpuLoad)}%`;
+                if (widget) { widget.dataset.targetId = bestGpuId; widget.dataset.targetName = bestGpuName; }
             }
             
             // Update all active charts

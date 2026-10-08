@@ -28,14 +28,21 @@ function connectWebSocket() {
     ws.onopen = () => {
         const statusEl = document.getElementById('connectionStatus');
         if (statusEl) {
-            statusEl.textContent = '已連線';
+            if (!statusEl.textContent.includes('(')) {
+                statusEl.textContent = '已連線';
+            }
             statusEl.style.color = '#66fcf1';
         }
     };
 
     ws.onmessage = (event) => {
         const msg = JSON.parse(event.data);
-        if (msg.type === 'update') {
+        if (msg.type === 'welcome') {
+            const statusEl = document.getElementById('connectionStatus');
+            if (statusEl) {
+                statusEl.textContent = `已連線 (${msg.model})`;
+            }
+        } else if (msg.type === 'update') {
             const dataMap = msg.data;
             const now = Date.now();
             // Update all active charts

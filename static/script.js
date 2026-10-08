@@ -50,13 +50,19 @@ function connectWebSocket() {
             for (const [id, data] of Object.entries(dataMap)) {
                 if (id.includes('cpu') && id.includes('load')) {
                     const el = document.querySelector('#widget-cpuLoad .widget-val');
+                    const widget = document.getElementById('widget-cpuLoad');
                     if (el) el.textContent = `${Math.round(data.value)}%`;
+                    if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name || 'CPU Load'; }
                 } else if (id.includes('gpu') && id.includes('load')) {
                     const el = document.querySelector('#widget-gpuLoad .widget-val');
+                    const widget = document.getElementById('widget-gpuLoad');
                     if (el) el.textContent = `${Math.round(data.value)}%`;
+                    if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name || 'GPU Load'; }
                 } else if (id.includes('ram') && id.includes('load')) {
                     const el = document.querySelector('#widget-ramLoad .widget-val');
+                    const widget = document.getElementById('widget-ramLoad');
                     if (el) el.textContent = `${Math.round(data.value)}%`;
+                    if (widget) { widget.dataset.targetId = id; widget.dataset.targetName = data.name || 'RAM Usage'; }
                 }
             }
             
@@ -563,5 +569,24 @@ mobileMenuBtn?.addEventListener('click', () => {
 sidebarOverlay?.addEventListener('click', () => {
     sidebarEl.classList.remove('open');
     sidebarOverlay.classList.remove('open');
+});
+
+// Mini Widget Click to Add Chart
+document.querySelectorAll('.mini-widget').forEach(widget => {
+    widget.addEventListener('click', () => {
+        const targetId = widget.dataset.targetId;
+        const targetName = widget.dataset.targetName || widget.querySelector('.widget-label').textContent;
+        
+        if (targetId) {
+            if (!activeCharts[targetId]) {
+                createChart(targetId, targetName, 15);
+                addMessage(`已從上方儀表板為您新增 ${targetName} 趨勢圖。`, 'system');
+            } else {
+                addMessage(`${targetName} 的趨勢圖已經在畫面上囉！`, 'system');
+                const chartEl = document.querySelector(`[gs-id="${targetId}"]`);
+                if(chartEl) chartEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+            }
+        }
+    });
 });
 

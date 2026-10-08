@@ -578,6 +578,7 @@ select option {
     font-family: var(--font-cyber);
     transition: all 0.3s ease;
     box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    cursor: pointer;
 }
 .mini-widget:hover {
     border-color: rgba(102, 252, 241, 0.3);

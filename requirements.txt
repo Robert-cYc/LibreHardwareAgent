@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+httpx
+pydantic
+google-genai
+anthropic
+sqlalchemy
+websockets
+python-dotenv
